@@ -500,30 +500,38 @@ body {
   pointer-events: none; white-space: nowrap;
 }
 
-/* Big, unmistakable "load a historic photo" call to action (amber = the logo
-   colour) shown centred while nothing is loaded, so it never reads as a hint. */
-.cam-load-cta {
+/* "Load a historic photo" call to action shown centred while nothing is
+   loaded. A large amber (logo colour) button — clearly a button, not a hint —
+   with a small caption beneath. */
+.cam-load {
   position: absolute; left: 50%; top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 6; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  width: min(78vw, 340px); text-align: center;
+  z-index: 6; width: min(88vw, 420px);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  text-align: center; pointer-events: none;
+}
+.cam-load__btn {
+  pointer-events: auto; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 10px;
   background: var(--accent); color: #1a1205;
-  border: none; border-radius: 20px;
-  padding: 26px 24px;
-  font-size: 21px; font-weight: 800; letter-spacing: 0.01em;
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), 0 0 0 6px rgba(245, 161, 30, 0.22);
-  animation: camCtaPulse 2.4s ease-in-out infinite;
+  border: none; border-radius: 999px;
+  padding: 15px 26px;
+  font-size: 17px; font-weight: 700; letter-spacing: 0.01em;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
 }
-.cam-load-cta svg { stroke: #1a1205; }
-.cam-load-cta:active { filter: brightness(1.06); }
-.cam-load-cta__sub {
-  font-size: 13px; font-weight: 600; line-height: 1.4;
-  color: #3a2a08; text-transform: none; letter-spacing: 0;
+.cam-load__btn svg { stroke: #1a1205; }
+.cam-load__btn:active { filter: brightness(1.06); transform: translateY(1px); }
+.cam-load__sub {
+  margin: 0; max-width: 30ch;
+  font-size: 13px; line-height: 1.4; color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
-@keyframes camCtaPulse {
-  0%, 100% { box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), 0 0 0 6px rgba(245, 161, 30, 0.22); }
-  50% { box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), 0 0 0 12px rgba(245, 161, 30, 0.10); }
+
+/* Review-screen top bar: a clear escape back to the live camera. */
+.cam-review__top {
+  position: absolute; top: 0; left: 0; z-index: 6;
+  padding: calc(env(safe-area-inset-top) + 10px) 12px 12px
+    calc(env(safe-area-inset-left) + 12px);
 }
 
 .cam-shutter {
@@ -566,7 +574,7 @@ body {
 .cam-review__grid {
   flex: 1; min-height: 0;
   display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
-  padding: calc(env(safe-area-inset-top) + 10px) 10px 6px;
+  padding: calc(env(safe-area-inset-top) + 60px) 10px 6px;
 }
 .cam-review__cell {
   position: relative; margin: 0;

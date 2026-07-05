@@ -206,6 +206,11 @@ export default function CameraOverlay({
   if (captured) {
     return (
       <div className="cam cam--review">
+        <div className="cam-review__top">
+          <button className="cam-chip" onClick={retake}>
+            ✕ Back to camera
+          </button>
+        </div>
         <div className="cam-review__grid">
           <figure className="cam-review__cell">
             <span className="cam-review__tag">Historic</span>
@@ -287,28 +292,30 @@ export default function CameraOverlay({
         )}
       </div>
 
-      {/* big, obvious call to action when nothing is loaded yet */}
+      {/* clear call to action when nothing is loaded yet */}
       {!historic && ready && (
-        <label className="cam-load-cta">
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <rect x="3" y="5" width="18" height="14" rx="2" />
-            <circle cx="12" cy="12" r="3.2" />
-          </svg>
-          Load historic photo
-          <span className="cam-load-cta__sub">
-            to ghost over the scene, then line it up and shoot
-          </span>
-          <input
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) onFile("historic", f);
-              e.currentTarget.value = "";
-            }}
-          />
-        </label>
+        <div className="cam-load">
+          <label className="cam-load__btn">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <circle cx="12" cy="12" r="3.2" />
+            </svg>
+            Load historic photo
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onFile("historic", f);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
+          <p className="cam-load__sub">
+            Ghost it over the scene, then line it up and shoot.
+          </p>
+        </div>
       )}
 
       {/* thumb controls (only meaningful once a ghost is loaded) */}

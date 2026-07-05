@@ -225,7 +225,7 @@ export default function App() {
       <header className="app-header">
         <div className="brand">
           <h1>Rephoto</h1>
-          <p>Line up then &amp; now — before/after alignment for walking tours</p>
+          <p>Line up then and now — before/after alignment for walking tours</p>
         </div>
         <div className="view-tabs">
           <button
@@ -369,7 +369,7 @@ export default function App() {
       <section className="preview-section">
         <div className="preview-intro">
           <strong>Aligned preview.</strong> This overlays your two aligned photos
-          so you can check the match. <em>Slider</em> wipes between then &amp; now;{" "}
+          so you can check the match. <em>Slider</em> wipes between then and now;{" "}
           <em>opacity</em> fades between them; <em>blink</em> flips back and forth
           (great for spotting anything that still jumps).
         </div>
