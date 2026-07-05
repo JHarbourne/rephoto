@@ -16,6 +16,12 @@ interface Ghost {
 
 const START: Ghost = { tx: 0, ty: 0, scale: 1 };
 
+// getUserMedia hands back a wide-angle feed on iPhone — roughly half the zoom
+// of the native 1x lens — so imported photos look ~2x too big against it. With
+// a 4K source we have the pixels to digitally zoom the preview (and capture)
+// back to a normal ~1x framing. Centre-crop factor; tweak to taste.
+const CAM_ZOOM = 2;
+
 /**
  * Full-screen live "rephotography" mode: the rear camera fills the screen with
  * the historic photo ghosted on top. Thumb sliders (opacity left, scale right)
@@ -182,13 +188,14 @@ export default function CameraOverlay({
     const c = document.createElement("canvas");
     c.width = outW;
     c.height = outH;
-    const scale = Math.max(outW / vw, outH / vh);
+    // Match the live preview's digital zoom so the capture frames identically.
+    const scale = Math.max(outW / vw, outH / vh) * CAM_ZOOM;
     const dw = vw * scale;
     const dh = vh * scale;
     c.getContext("2d")!.drawImage(v, (outW - dw) / 2, (outH - dh) / 2, dw, dh);
     // Temporary field diagnostic — shown on the review screen so a screenshot
     // reveals the exact numbers on a real device.
-    const diag = `cam ${vw}×${vh} · box ${boxW}×${boxH} · dpr ${dpr} · out ${outW}×${outH}`;
+    const diag = `cam ${vw}×${vh} · box ${boxW}×${boxH} · zoom ${CAM_ZOOM}x · out ${outW}×${outH}`;
     setFlash(true);
     window.setTimeout(() => setFlash(false), 180);
     c.toBlob(
@@ -284,7 +291,14 @@ export default function CameraOverlay({
   // ---------- Live camera ----------
   return (
     <div className="cam">
-      <video ref={videoRef} className="cam-video" playsInline autoPlay muted />
+      <video
+        ref={videoRef}
+        className="cam-video"
+        style={{ transform: `scale(${CAM_ZOOM})` }}
+        playsInline
+        autoPlay
+        muted
+      />
 
       {historic && (
         <img
