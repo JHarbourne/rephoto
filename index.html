@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Historic Photo Aligner</title>
+    <meta
+      name="description"
+      content="Align a modern photograph to a historic photograph for museum-quality before/after sliders."
+    />
+    <meta name="theme-color" content="#17130f" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Photo Aligner" />
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!--
+      OpenCV.js is a ~10 MB Emscripten runtime. We load it here, during initial
+      page parse, for two reasons:
+        1. Emscripten begins initialising as the script loads; kicking it off
+           now (rather than from a React effect after the `load` event) avoids
+           the runtime stalling while it waits on page-lifecycle hooks.
+        2. We only start the React app once the runtime is ready, so the app
+           can use OpenCV immediately and never has to render a half-loaded
+           state. Emscripten's UMD wrapper adopts this pre-declared `Module`.
+    -->
+    <script>
+      var Module = {
+        onRuntimeInitialized: function () {
+          window.__openCvReady = true;
+        },
+      };
+      (function () {
+        var s = document.createElement("script");
+        s.src = "./opencv.js";
+        s.async = true;
+        s.onerror = function () {
+          window.__openCvError = "Failed to load ./opencv.js";
+        };
+        document.head.appendChild(s);
+      })();
+    </script>
+
+    <script type="module">
+      // Start the app once OpenCV is ready (or has definitively failed).
+      const isReady = () =>
+        window.cv &&
+        typeof window.cv.Mat === "function" &&
+        typeof window.cv.imread === "function" &&
+        typeof window.cv.findHomography === "function";
+
+      const start = () => import("./src/main.tsx");
+
+      (function poll() {
+        if (isReady() || window.__openCvError) start();
+        else setTimeout(poll, 50);
+      })();
+    </script>
+  </body>
+</html>

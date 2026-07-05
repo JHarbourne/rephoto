@@ -1,0 +1,29 @@
+{
+  "name": "historic-photo-aligner",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Align a modern photograph to a historic photograph for museum-quality before/after sliders.",
+  "scripts": {
+    "postinstall": "node scripts/copy-opencv.mjs",
+    "predev": "node scripts/copy-opencv.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/copy-opencv.mjs",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@techstark/opencv-js": "^4.10.0-release.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vite-plugin-pwa": "^1.3.0"
+  }
+}

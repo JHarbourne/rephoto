@@ -1,0 +1,14 @@
+node_modules
+dist
+public/opencv.js
+*.local
+.DS_Store
+
+# scratch / verification helpers
+scratch-e2e.mjs
+camera-e2e.mjs
+pwa-check.mjs
+gen-icons.mjs
+dbg.mjs
+dbg-iso.mjs
+node-cv-test.mjs
