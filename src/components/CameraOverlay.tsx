@@ -173,17 +173,19 @@ export default function CameraOverlay({
     if (!captured) return;
     const nav = navigator as Navigator & {
       canShare?: (d: ShareData) => boolean;
+      share?: (d: ShareData) => Promise<void>;
     };
-    if (nav.canShare && nav.canShare({ files: [captured.file] })) {
+    // If the device can share files (iOS/Android), use the share sheet — it
+    // has "Save Image". If the user cancels, do NOT fall back to a download
+    // (that's the confusing "Open in Preview" screen). Only download when
+    // there's no share support at all.
+    if (nav.share && nav.canShare && nav.canShare({ files: [captured.file] })) {
       try {
-        await navigator.share({
-          files: [captured.file],
-          title: "Rephoto capture",
-        });
-        return;
+        await nav.share({ files: [captured.file], title: "Rephoto capture" });
       } catch {
-        /* user cancelled the share sheet — fall through to download */
+        /* cancelled or failed — leave the user on the review screen */
       }
+      return;
     }
     const a = document.createElement("a");
     a.href = captured.url;
@@ -268,8 +270,34 @@ export default function CameraOverlay({
         <button className="cam-chip" onClick={onExit}>
           ⇄ Align photos
         </button>
-        <label className="cam-chip">
-          {historic ? "Change historic photo" : "Load historic photo"}
+        {historic && (
+          <label className="cam-chip">
+            Change historic photo
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onFile("historic", f);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
+        )}
+      </div>
+
+      {/* big, obvious call to action when nothing is loaded yet */}
+      {!historic && ready && (
+        <label className="cam-load-cta">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <circle cx="12" cy="12" r="3.2" />
+          </svg>
+          Load historic photo
+          <span className="cam-load-cta__sub">
+            to ghost over the scene, then line it up and shoot
+          </span>
           <input
             type="file"
             accept="image/*"
@@ -281,7 +309,7 @@ export default function CameraOverlay({
             }}
           />
         </label>
-      </div>
+      )}
 
       {/* thumb controls (only meaningful once a ghost is loaded) */}
       {historic && (
@@ -325,12 +353,6 @@ export default function CameraOverlay({
         <span />
       </button>
 
-      {!historic && ready && (
-        <p className="cam-hint">
-          Load a historic photo to ghost over the scene, then line it up and
-          shoot.
-        </p>
-      )}
       {(streamError || starting) && (
         <div className="cam-status">
           {streamError ? (
