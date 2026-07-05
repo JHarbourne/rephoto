@@ -266,7 +266,7 @@ export default function CameraOverlay({
       {/* top bar */}
       <div className="cam-top">
         <button className="cam-chip" onClick={onExit}>
-          ✕ Cancel
+          ⇄ Align photos
         </button>
         <label className="cam-chip">
           {historic ? "Change historic photo" : "Load historic photo"}

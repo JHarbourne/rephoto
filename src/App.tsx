@@ -46,7 +46,7 @@ function loadImageFile(file: File): Promise<LoadedImage> {
 type View = "align" | "camera";
 
 export default function App() {
-  const [view, setView] = useState<View>("align");
+  const [view, setView] = useState<View>("camera");
   const [cvReady, setCvReady] = useState(false);
   const [historic, setHistoric] = useState<LoadedImage | null>(null);
   const [modern, setModern] = useState<LoadedImage | null>(null);
@@ -292,10 +292,6 @@ export default function App() {
         <button className="btn" onClick={deleteSelected} disabled={!selection}>
           Delete selected point
         </button>
-        <button className="btn" onClick={resetPoints} disabled={!pairs.length}>
-          Reset points
-        </button>
-
         <div className="sep" />
 
         <label className="warp-select">
@@ -311,27 +307,13 @@ export default function App() {
         <button className="btn primary" onClick={doAlign} disabled={!canAlign}>
           Align
         </button>
-        <button className="btn" onClick={autoCrop} disabled={!result}>
-          Auto crop overlap
-        </button>
-
-        <div className="sep" />
-
-        <button
-          className="btn"
-          onClick={onExportImages}
-          disabled={!result || busy}
-        >
-          Export images
-        </button>
-        <button
-          className="btn"
-          onClick={onExportJSON}
-          disabled={!historic || !modern}
-        >
-          Export alignment JSON
-        </button>
       </div>
+
+      <p className="hint-line">
+        Tap the same feature on both photos to add a numbered pair.{" "}
+        <strong>Pinch to zoom</strong> for precise placement, drag a point to
+        move it, or tap a point then “Delete selected point”.
+      </p>
 
       <div className="status-bar">
         <span>
@@ -385,6 +367,12 @@ export default function App() {
       </main>
 
       <section className="preview-section">
+        <div className="preview-intro">
+          <strong>Aligned preview.</strong> This overlays your two aligned photos
+          so you can check the match. <em>Slider</em> wipes between then &amp; now;{" "}
+          <em>opacity</em> fades between them; <em>blink</em> flips back and forth
+          (great for spotting anything that still jumps).
+        </div>
         <div className="preview-controls">
           <div className="mode-group">
             {(["slider", "opacity", "blink"] as PreviewMode[]).map((m) => (
@@ -474,6 +462,30 @@ export default function App() {
           }}
         />
       </section>
+
+      <div className="finish-bar">
+        <button className="btn" onClick={autoCrop} disabled={!result}>
+          Auto crop overlap
+        </button>
+        <button
+          className="btn primary"
+          onClick={onExportImages}
+          disabled={!result || busy}
+        >
+          Export images
+        </button>
+        <button
+          className="btn"
+          onClick={onExportJSON}
+          disabled={!historic || !modern}
+          title="A small data file recording your points and the warp — for reproducing or editing the alignment later. Most people won't need it."
+        >
+          Export alignment JSON
+        </button>
+        <button className="btn danger" onClick={resetPoints} disabled={!pairs.length}>
+          Clear all points
+        </button>
+      </div>
 
       <footer className="app-footer">
         Point tips: turn on <strong>Add point mode</strong>, then click the same

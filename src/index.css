@@ -569,3 +569,26 @@ body {
 }
 .app-meta a { color: var(--accent); text-decoration: none; }
 .app-meta a:hover { text-decoration: underline; }
+
+/* Align-mode additions */
+.panel-actions { display: inline-flex; align-items: center; gap: 10px; }
+.mini-btn {
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
+  border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer;
+}
+.mini-btn:hover { border-color: var(--accent); color: var(--text); }
+
+.hint-line { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; padding: 0 2px; }
+.hint-line strong { color: var(--accent); }
+
+.preview-intro { color: var(--muted); font-size: 13px; line-height: 1.55; margin: 0 0 4px; }
+.preview-intro strong { color: var(--text); }
+.preview-intro em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+.finish-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px;
+}
+.btn.danger { border-color: rgba(255, 90, 90, 0.4); color: var(--danger); }
+.btn.danger:hover:not(:disabled) { border-color: var(--danger); }

@@ -17,6 +17,7 @@ export default defineConfig({
   base,
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    __GC_CODE__: JSON.stringify(process.env.VITE_GC_CODE || ""),
   },
   plugins: [
     react(),
