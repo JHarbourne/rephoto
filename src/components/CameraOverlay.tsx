@@ -349,22 +349,12 @@ export default function CameraOverlay({
         </div>
       )}
 
-      {/* thumb controls (only meaningful once a ghost is loaded) */}
+      {/* Thumb controls (only meaningful once a ghost is loaded). Scale on the
+          left, opacity on the right: opacity is used most and sits by the
+          shutter, and keeping the left hand away from the lens in landscape. */}
       {historic && (
         <>
           <div className="cam-slider cam-slider--left">
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={opacity}
-              aria-label="Ghost opacity"
-              onChange={(e) => setOpacity(Number(e.target.value))}
-            />
-            <span className="cam-slider__label">opacity</span>
-          </div>
-          <div className="cam-slider cam-slider--right">
             <input
               type="range"
               min={0.3}
@@ -377,6 +367,18 @@ export default function CameraOverlay({
               }
             />
             <span className="cam-slider__label">scale</span>
+          </div>
+          <div className="cam-slider cam-slider--right">
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={opacity}
+              aria-label="Ghost opacity"
+              onChange={(e) => setOpacity(Number(e.target.value))}
+            />
+            <span className="cam-slider__label">opacity</span>
           </div>
         </>
       )}
