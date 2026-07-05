@@ -84,28 +84,43 @@ Then open the dev server URL it prints.
 
 ## On your phone (camera overlay + install)
 
-The app is hosted at **https://jharbourne.github.io/rephoto/** (via the
-GitHub Actions workflow in this repo). On your phone:
+The app is hosted at **https://rephoto.nearmark.co.uk** — a subdomain of
+nearmark.co.uk, served from GitHub Pages via the GitHub Actions workflow in this
+repo. On your phone:
 
 1. Open that URL in Safari (iOS) or Chrome (Android).
 2. **Install it**: iOS → Share → *Add to Home Screen*; Android → menu →
    *Install app*. It then launches full-screen with its own icon and works
    offline.
-3. Open the **Camera overlay** tab, load the historic photo, and allow camera
-   access when prompted. Drag the ghost to move it, pinch to zoom/rotate, adjust
-   opacity, line up a fixed edge, and **Capture**. The shot lands in the
-   aligner tab for the fine-tune, and a copy downloads to your device.
+3. On the **Camera** tab (the default), tap **Load historic photo** and allow
+   camera access. The old photo is locked into a frame shaped like it; move the
+   phone (and use the **zoom** and **opacity** sliders) to line the live scene
+   up under the ghost, then press the shutter.
+4. On the review screen the pair sit side by side. Choose **Save to Photos**,
+   **Use in aligner** (for a point-based fine-tune), or **＋ Take another**.
 
-The camera needs a secure (https) page — the hosted site qualifies; a plain
-`http://` address will not grant camera access.
+The captured photo is cropped to the historic's aspect ratio, so the two come
+out the same shape — a matched before/after pair. The camera needs a secure
+(https) page, which the hosted site provides.
+
+### Hosting & analytics
+
+- **Hosting:** GitHub Pages, served at the custom domain `rephoto.nearmark.co.uk`
+  (set via `public/CNAME`; a DNS record `CNAME rephoto → jharbourne.github.io`
+  points the subdomain at Pages). The build base is `/` because the app is served
+  at the domain root.
+- **Analytics:** Cloudflare Web Analytics — cookieless, no consent banner needed,
+  aggregate page views only. The beacon token (public by design) is the default
+  in `vite.config.ts`; the `VITE_CF_BEACON` env var overrides it (blank = off).
 
 ### Deploying your own copy
 
-`.github/workflows/deploy.yml` builds the app and publishes it to GitHub Pages
-on every push to `main`. Enable it once under repo **Settings → Pages → Source
-→ GitHub Actions**. The build sets `VITE_BASE` to the repo's sub-path
-(`/rephoto/`) so the PWA scope and asset URLs resolve correctly; change it if
-you deploy under a different path.
+`.github/workflows/deploy.yml` builds the app and publishes it to GitHub Pages on
+every push to `main`, with a one-shot retry to ride out GitHub's occasional
+transient publish failures. Enable it once under repo **Settings → Pages → Source
+→ GitHub Actions**. For a custom domain, put it in `public/CNAME` and add the
+matching DNS record; otherwise set `VITE_BASE` to your repo sub-path so the PWA
+scope and asset URLs resolve.
 
 ## Workflow
 
