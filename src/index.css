@@ -588,6 +588,12 @@ body {
   font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
   color: #fff; background: rgba(0, 0, 0, 0.5); padding: 3px 9px; border-radius: 999px;
 }
+.cam-review__diag {
+  margin: 0; text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px; color: rgba(255, 255, 255, 0.55);
+  padding: 0 12px 2px;
+}
 .cam-review__bar {
   display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
   padding: 10px 12px calc(env(safe-area-inset-bottom) + 14px);

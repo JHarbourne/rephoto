@@ -34,9 +34,11 @@ export default function CameraOverlay({
   const [starting, setStarting] = useState(true);
   const [opacity, setOpacity] = useState(0.5);
   const [ghost, setGhost] = useState<Ghost>(START);
-  const [captured, setCaptured] = useState<{ url: string; file: File } | null>(
-    null
-  );
+  const [captured, setCaptured] = useState<{
+    url: string;
+    file: File;
+    diag: string;
+  } | null>(null);
   const [flash, setFlash] = useState(false);
 
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
@@ -157,29 +159,29 @@ export default function CameraOverlay({
       setStreamError("Camera frame not ready yet — give it a second.");
       return;
     }
-    // The viewfinder uses object-fit: cover, so it shows a centre-cropped slice
-    // of the camera frame, not the whole (wider) sensor image. Capture that same
-    // slice so the saved photo matches exactly what was lined up on screen.
+    // The viewfinder fills the screen with object-fit: cover, so it shows a
+    // centre-cropped slice of the camera frame, not the whole (wider) sensor
+    // image. Reproduce that exact cover mapping: make the output canvas the same
+    // shape as the on-screen video box, then draw the video scaled to cover it,
+    // centring and clipping the overflow — pixel-for-pixel what's on screen.
     const vw = v.videoWidth;
     const vh = v.videoHeight;
-    const box = v.getBoundingClientRect();
-    const viewAspect = box.width / box.height;
-    const frameAspect = vw / vh;
-    let sw = vw;
-    let sh = vh;
-    if (frameAspect > viewAspect) {
-      // frame is wider than the screen — crop the sides
-      sw = Math.round(vh * viewAspect);
-    } else {
-      // frame is taller than the screen — crop top and bottom
-      sh = Math.round(vw / viewAspect);
-    }
-    const sx = Math.round((vw - sw) / 2);
-    const sy = Math.round((vh - sh) / 2);
+    const rect = v.getBoundingClientRect();
+    const boxW = Math.round(rect.width) || window.innerWidth;
+    const boxH = Math.round(rect.height) || window.innerHeight;
+    const dpr = window.devicePixelRatio || 1;
+    const outW = Math.max(1, Math.round(boxW * dpr));
+    const outH = Math.max(1, Math.round(boxH * dpr));
     const c = document.createElement("canvas");
-    c.width = sw;
-    c.height = sh;
-    c.getContext("2d")!.drawImage(v, sx, sy, sw, sh, 0, 0, sw, sh);
+    c.width = outW;
+    c.height = outH;
+    const scale = Math.max(outW / vw, outH / vh);
+    const dw = vw * scale;
+    const dh = vh * scale;
+    c.getContext("2d")!.drawImage(v, (outW - dw) / 2, (outH - dh) / 2, dw, dh);
+    // Temporary field diagnostic — shown on the review screen so a screenshot
+    // reveals the exact numbers on a real device.
+    const diag = `cam ${vw}×${vh} · box ${boxW}×${boxH} · dpr ${dpr} · out ${outW}×${outH}`;
     setFlash(true);
     window.setTimeout(() => setFlash(false), 180);
     c.toBlob(
@@ -188,7 +190,7 @@ export default function CameraOverlay({
         const file = new File([blob], "rephoto-capture.jpg", {
           type: "image/jpeg",
         });
-        setCaptured({ url: URL.createObjectURL(file), file });
+        setCaptured({ url: URL.createObjectURL(file), file, diag });
       },
       "image/jpeg",
       0.95
@@ -256,6 +258,7 @@ export default function CameraOverlay({
             <img src={captured.url} alt="captured" />
           </figure>
         </div>
+        <p className="cam-review__diag">{captured.diag}</p>
         <div className="cam-review__bar">
           <button className="cam-btn ghost" onClick={retake}>
             ↺ Retake
