@@ -60,8 +60,15 @@ export default function CameraOverlay({
         return;
       }
       try {
+        // Without resolution hints iOS Safari hands back a tiny 480x640 stream,
+        // so captures come out soft. Ask for as much as the device will give
+        // (clamped down gracefully via `ideal`) for sharp, keepable photos.
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 3840 },
+            height: { ideal: 2160 },
+          },
           audio: false,
         });
         if (cancelled) {
