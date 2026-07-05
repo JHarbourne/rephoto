@@ -35,9 +35,10 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Served from https://<user>.github.io/rephoto/ — set the base so
-          # asset URLs and the PWA service-worker scope resolve correctly.
-          VITE_BASE: /rephoto/
+          # Served at the root of the custom domain (rephoto.nearmark.co.uk,
+          # set via public/CNAME), so the base is "/" — asset URLs and the PWA
+          # service-worker scope resolve from the domain root.
+          VITE_BASE: "/"
           # Cloudflare Web Analytics beacon token (optional). Add a repo
           # secret named CF_BEACON_TOKEN to switch analytics on — no code
           # change needed; empty = analytics stays off.
