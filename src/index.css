@@ -426,6 +426,19 @@ body {
   transform-origin: center center;
   will-change: transform, opacity;
 }
+/* Capture frame shaped to the historic photo. The huge spread box-shadow dims
+   everything outside it so the framed region reads as the shot that will be
+   saved. */
+.cam-frame {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+  outline: 2px solid rgba(255, 255, 255, 0.92);
+  outline-offset: -1px;
+  border-radius: 2px;
+}
+
 .cam-gestures { position: absolute; inset: 0; z-index: 2; touch-action: none; }
 .cam-grid { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 .cam-grid span { position: absolute; background: rgba(255, 255, 255, 0.22); }

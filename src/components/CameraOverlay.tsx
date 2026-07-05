@@ -16,11 +16,16 @@ interface Ghost {
 
 const START: Ghost = { tx: 0, ty: 0, scale: 1 };
 
-// getUserMedia hands back a wide-angle feed on iPhone — roughly half the zoom
-// of the native 1x lens — so imported photos look ~2x too big against it. With
-// a 4K source we have the pixels to digitally zoom the preview (and capture)
-// back to a normal ~1x framing. Centre-crop factor; tweak to taste.
-const CAM_ZOOM = 2;
+// Largest rect of a given aspect ratio that fits (centred) inside a box —
+// the "contain" rect. Used to frame the capture to the historic photo's shape.
+function containRect(boxW: number, boxH: number, aspect: number) {
+  const boxAspect = boxW / boxH;
+  let w = boxW;
+  let h = boxH;
+  if (aspect > boxAspect) h = boxW / aspect;
+  else w = boxH * aspect;
+  return { w, h, left: (boxW - w) / 2, top: (boxH - h) / 2 };
+}
 
 /**
  * Full-screen live "rephotography" mode: the rear camera fills the screen with
@@ -46,6 +51,27 @@ export default function CameraOverlay({
     diag: string;
   } | null>(null);
   const [flash, setFlash] = useState(false);
+  const frameRef = useRef<HTMLDivElement | null>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+
+  // Track the on-screen video size so the capture frame can be laid out to the
+  // historic photo's aspect ratio (and recomputed on rotate/resize).
+  useEffect(() => {
+    const update = () => {
+      const el = videoRef.current;
+      setBox({
+        w: el?.clientWidth || window.innerWidth,
+        h: el?.clientHeight || window.innerHeight,
+      });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, []);
 
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const gestureStart = useRef<{
@@ -172,30 +198,33 @@ export default function CameraOverlay({
       setStreamError("Camera frame not ready yet — give it a second.");
       return;
     }
-    // The viewfinder fills the screen with object-fit: cover, so it shows a
-    // centre-cropped slice of the camera frame, not the whole (wider) sensor
-    // image. Reproduce that exact cover mapping: make the output canvas the same
-    // shape as the on-screen video box, then draw the video scaled to cover it,
-    // centring and clipping the overflow — pixel-for-pixel what's on screen.
+    // The video fills the screen with object-fit: cover. Work out where its
+    // pixels land on screen, then capture only the framed region — the rect
+    // shaped to the historic photo — so the new photo comes out the SAME shape
+    // as the historic and the pair drops straight into a before/after slider.
     const vw = v.videoWidth;
     const vh = v.videoHeight;
-    const rect = v.getBoundingClientRect();
-    const boxW = Math.round(rect.width) || window.innerWidth;
-    const boxH = Math.round(rect.height) || window.innerHeight;
-    const dpr = window.devicePixelRatio || 1;
-    const outW = Math.max(1, Math.round(boxW * dpr));
-    const outH = Math.max(1, Math.round(boxH * dpr));
+    const vbox = v.getBoundingClientRect();
+    const coverScale = Math.max(vbox.width / vw, vbox.height / vh);
+    const ox = vbox.left + (vbox.width - vw * coverScale) / 2;
+    const oy = vbox.top + (vbox.height - vh * coverScale) / 2;
+    // Capture the framed region; fall back to the whole view if unframed.
+    const fr = frameRef.current?.getBoundingClientRect() ?? vbox;
+    const sx = Math.max(0, (fr.left - ox) / coverScale);
+    const sy = Math.max(0, (fr.top - oy) / coverScale);
+    const sw = fr.width / coverScale;
+    const sh = fr.height / coverScale;
+    const outW = Math.max(1, Math.round(sw));
+    const outH = Math.max(1, Math.round(sh));
     const c = document.createElement("canvas");
     c.width = outW;
     c.height = outH;
-    // Match the live preview's digital zoom so the capture frames identically.
-    const scale = Math.max(outW / vw, outH / vh) * CAM_ZOOM;
-    const dw = vw * scale;
-    const dh = vh * scale;
-    c.getContext("2d")!.drawImage(v, (outW - dw) / 2, (outH - dh) / 2, dw, dh);
+    c.getContext("2d")!.drawImage(v, sx, sy, sw, sh, 0, 0, outW, outH);
     // Temporary field diagnostic — shown on the review screen so a screenshot
     // reveals the exact numbers on a real device.
-    const diag = `cam ${vw}×${vh} · box ${boxW}×${boxH} · zoom ${CAM_ZOOM}x · out ${outW}×${outH}`;
+    const diag = `cam ${vw}×${vh} · frame ${Math.round(fr.width)}×${Math.round(
+      fr.height
+    )} · out ${outW}×${outH}`;
     setFlash(true);
     window.setTimeout(() => setFlash(false), 180);
     c.toBlob(
@@ -294,7 +323,6 @@ export default function CameraOverlay({
       <video
         ref={videoRef}
         className="cam-video"
-        style={{ transform: `scale(${CAM_ZOOM})` }}
         playsInline
         autoPlay
         muted
@@ -309,6 +337,27 @@ export default function CameraOverlay({
           draggable={false}
         />
       )}
+
+      {/* Capture frame, shaped to the historic photo. Everything outside is
+          dimmed; the shot is cropped to exactly this rect so the new photo
+          matches the historic's proportions. */}
+      {historic && box.w > 0 && (() => {
+        const ar = historic.width / historic.height;
+        const f = containRect(box.w, box.h, ar);
+        return (
+          <div
+            ref={frameRef}
+            className="cam-frame"
+            style={{
+              left: `${f.left}px`,
+              top: `${f.top}px`,
+              width: `${f.w}px`,
+              height: `${f.h}px`,
+            }}
+            aria-hidden
+          />
+        );
+      })()}
 
       <div className="cam-grid" aria-hidden>
         <span /> <span /> <span /> <span />
