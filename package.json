@@ -1,7 +1,7 @@
 {
   "name": "historic-photo-aligner",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Align a modern photograph to a historic photograph for museum-quality before/after sliders.",
   "scripts": {

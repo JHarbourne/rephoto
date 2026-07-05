@@ -7,7 +7,6 @@ import {
   buildAlignmentJSON,
   exportAlignmentJSON,
   exportImages,
-  triggerDownload,
 } from "./lib/export";
 import { loadOpenCV } from "./opencv/loadOpenCV";
 import type {
@@ -161,10 +160,10 @@ export default function App() {
     if (result) setCrop(result.coverage);
   };
 
-  // From the live-camera "ghost overlay" mode: save the captured frame and hand
-  // it to the aligner as the modern image for a pixel-perfect finish.
+  // From the live-camera "ghost overlay" mode: hand the captured frame to the
+  // aligner as the modern image. (Saving to Photos is offered in the camera
+  // review screen, not forced here.)
   const handleCapture = async (file: File) => {
-    triggerDownload(file, file.name);
     try {
       const img = await loadImageFile(file);
       setModern(img);
@@ -250,6 +249,7 @@ export default function App() {
           historic={historic}
           onFile={handleFile}
           onCapture={handleCapture}
+          onExit={() => setView("align")}
         />
       ) : (
         <>
@@ -481,6 +481,16 @@ export default function App() {
         again on the modern image to make a numbered pair. Turn Add mode off to
         drag points. Spread 6–10 points across the whole frame for the steadiest
         alignment.
+        <span className="app-meta">
+          <span>Rephoto v{__APP_VERSION__}</span>
+          <a
+            href="https://github.com/JHarbourne/rephoto/issues/new"
+            target="_blank"
+            rel="noopener"
+          >
+            Suggest an improvement
+          </a>
+        </span>
       </footer>
         </>
       )}
