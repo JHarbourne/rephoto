@@ -142,6 +142,12 @@ export default function CameraOverlay({
     }
   }, [captured]);
 
+  // Every newly-loaded photo starts centred at 100%, so each rephoto begins
+  // fresh rather than inheriting the last one's position.
+  useEffect(() => {
+    setGhost(START);
+  }, [historic]);
+
   // --- ghost positioning: drag = move, pinch = scale (no rotation) ---
   const onPointerDown = (e: React.PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
@@ -292,8 +298,8 @@ export default function CameraOverlay({
     return (
       <div className="cam cam--review">
         <div className="cam-review__top">
-          <button className="cam-chip" onClick={retake}>
-            ✕ Back to camera
+          <button className="cam-chip cam-chip--strong" onClick={retake}>
+            ＋ Take another
           </button>
         </div>
         <div className="cam-review__grid">

@@ -481,6 +481,12 @@ body {
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
 }
 .cam-chip:active { background: rgba(20, 22, 26, 0.85); }
+/* Prominent forward action (e.g. "Take another") in the amber accent. */
+.cam-chip--strong {
+  background: var(--accent); color: #1a1205;
+  border-color: var(--accent); font-weight: 700;
+}
+.cam-chip--strong:active { background: var(--accent); filter: brightness(1.06); }
 
 .cam-slider {
   position: absolute; top: 50%;
