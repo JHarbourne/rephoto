@@ -8,14 +8,6 @@ interface Props {
   onExit: () => void;
 }
 
-interface Ghost {
-  tx: number;
-  ty: number;
-  scale: number;
-}
-
-const START: Ghost = { tx: 0, ty: 0, scale: 1 };
-
 // Largest rect of a given aspect ratio that fits (centred) inside a box —
 // the "contain" rect. Used to frame the capture to the historic photo's shape.
 function containRect(boxW: number, boxH: number, aspect: number) {
@@ -27,11 +19,17 @@ function containRect(boxW: number, boxH: number, aspect: number) {
   return { w, h, left: (boxW - w) / 2, top: (boxH - h) / 2 };
 }
 
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 5;
+const clampZoom = (z: number) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
+
 /**
- * Full-screen live "rephotography" mode: the rear camera fills the screen with
- * the historic photo ghosted on top. Thumb sliders (opacity left, scale right)
- * and a big shutter keep everything in reach in landscape. Capturing shows an
- * in-app review to compare and keep or retake — no browser download screen.
+ * Full-screen live "rephotography" mode. The historic photo is locked into a
+ * capture frame shaped exactly like it; the rest of the screen is dimmed. You
+ * move the phone (and zoom the camera to match the old lens) until the live
+ * scene lines up under the ghost, then shoot. The captured photo is cropped to
+ * the frame, so it comes out the same aspect AND crop as the historic — a
+ * matched pair for a before/after slider.
  */
 export default function CameraOverlay({
   historic,
@@ -44,7 +42,7 @@ export default function CameraOverlay({
   const [streamError, setStreamError] = useState<string | null>(null);
   const [starting, setStarting] = useState(true);
   const [opacity, setOpacity] = useState(0.5);
-  const [ghost, setGhost] = useState<Ghost>(START);
+  const [zoom, setZoom] = useState(1);
   const [captured, setCaptured] = useState<{
     url: string;
     file: File;
@@ -74,12 +72,7 @@ export default function CameraOverlay({
   }, []);
 
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const gestureStart = useRef<{
-    ghost: Ghost;
-    dist: number;
-    cx: number;
-    cy: number;
-  } | null>(null);
+  const pinchStart = useRef<{ zoom: number; dist: number } | null>(null);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -133,8 +126,7 @@ export default function CameraOverlay({
   }, []);
 
   // Returning from the review screen mounts a fresh <video> element, so the
-  // live stream has to be re-attached — otherwise it stays black with only the
-  // ghost showing.
+  // live stream has to be re-attached — otherwise it stays black.
   useEffect(() => {
     if (!captured && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
@@ -142,54 +134,35 @@ export default function CameraOverlay({
     }
   }, [captured]);
 
-  // --- ghost positioning (drag = move, pinch = scale; no rotation) ---
+  // --- pinch to zoom the camera (two fingers); the ghost stays put ---
   const onPointerDown = (e: React.PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    beginGesture();
+    beginPinch();
   };
-  const beginGesture = () => {
+  const beginPinch = () => {
     const pts = [...pointers.current.values()];
     if (pts.length === 2) {
       const [a, b] = pts;
-      gestureStart.current = {
-        ghost,
-        dist: Math.hypot(b.x - a.x, b.y - a.y),
-        cx: (a.x + b.x) / 2,
-        cy: (a.y + b.y) / 2,
-      };
-    } else if (pts.length === 1) {
-      gestureStart.current = { ghost, dist: 0, cx: pts[0].x, cy: pts[0].y };
+      pinchStart.current = { zoom, dist: Math.hypot(b.x - a.x, b.y - a.y) };
+    } else {
+      pinchStart.current = null;
     }
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (!pointers.current.has(e.pointerId)) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    const s = gestureStart.current;
-    if (!s) return;
+    const s = pinchStart.current;
     const pts = [...pointers.current.values()];
-    if (pts.length >= 2) {
+    if (s && pts.length >= 2) {
       const [a, b] = pts;
       const dist = Math.hypot(b.x - a.x, b.y - a.y);
-      const cx = (a.x + b.x) / 2;
-      const cy = (a.y + b.y) / 2;
-      setGhost({
-        scale: Math.max(0.1, Math.min(4, s.ghost.scale * (dist / (s.dist || 1)))),
-        tx: s.ghost.tx + (cx - s.cx),
-        ty: s.ghost.ty + (cy - s.cy),
-      });
-    } else if (pts.length === 1) {
-      setGhost({
-        ...s.ghost,
-        tx: s.ghost.tx + (pts[0].x - s.cx),
-        ty: s.ghost.ty + (pts[0].y - s.cy),
-      });
+      setZoom(clampZoom(s.zoom * (dist / (s.dist || 1))));
     }
   };
   const onPointerUp = (e: React.PointerEvent) => {
     pointers.current.delete(e.pointerId);
-    gestureStart.current = null;
-    if (pointers.current.size > 0) beginGesture();
+    beginPinch();
   };
 
   const shoot = () => {
@@ -198,33 +171,42 @@ export default function CameraOverlay({
       setStreamError("Camera frame not ready yet — give it a second.");
       return;
     }
-    // The video fills the screen with object-fit: cover. Work out where its
-    // pixels land on screen, then capture only the framed region — the rect
-    // shaped to the historic photo — so the new photo comes out the SAME shape
-    // as the historic and the pair drops straight into a before/after slider.
+    // The video fills the screen with object-fit: cover and is scaled by `zoom`
+    // from its centre. Map the on-screen capture frame back to source pixels and
+    // grab exactly that region, so the new photo is the same aspect AND crop as
+    // the historic — ready to drop into a before/after slider.
     const vw = v.videoWidth;
     const vh = v.videoHeight;
-    const vbox = v.getBoundingClientRect();
-    const coverScale = Math.max(vbox.width / vw, vbox.height / vh);
-    const ox = vbox.left + (vbox.width - vw * coverScale) / 2;
-    const oy = vbox.top + (vbox.height - vh * coverScale) / 2;
-    // Capture the framed region; fall back to the whole view if unframed.
-    const fr = frameRef.current?.getBoundingClientRect() ?? vbox;
-    const sx = Math.max(0, (fr.left - ox) / coverScale);
-    const sy = Math.max(0, (fr.top - oy) / coverScale);
-    const sw = fr.width / coverScale;
-    const sh = fr.height / coverScale;
+    // Use LAYOUT dimensions (clientWidth/Height via `box`), NOT
+    // getBoundingClientRect — the latter includes the video's CSS zoom transform
+    // and would double-count the zoom. .cam is fixed at the viewport origin, so
+    // the frame's layout coords are also its screen coords.
+    const bw = box.w || window.innerWidth;
+    const bh = box.h || window.innerHeight;
+    const fr =
+      historic && bw && bh
+        ? containRect(bw, bh, historic.width / historic.height)
+        : { left: 0, top: 0, w: bw, h: bh };
+    const coverScale = Math.max(bw / vw, bh / vh);
+    const effScale = coverScale * zoom;
+    let sx = vw / 2 + (fr.left - bw / 2) / effScale;
+    let sy = vh / 2 + (fr.top - bh / 2) / effScale;
+    let sw = fr.w / effScale;
+    let sh = fr.h / effScale;
+    // Keep the source rect inside the frame (guards against edge/zoom rounding).
+    sx = Math.max(0, Math.min(sx, vw));
+    sy = Math.max(0, Math.min(sy, vh));
+    sw = Math.min(sw, vw - sx);
+    sh = Math.min(sh, vh - sy);
     const outW = Math.max(1, Math.round(sw));
     const outH = Math.max(1, Math.round(sh));
     const c = document.createElement("canvas");
     c.width = outW;
     c.height = outH;
     c.getContext("2d")!.drawImage(v, sx, sy, sw, sh, 0, 0, outW, outH);
-    // Temporary field diagnostic — shown on the review screen so a screenshot
-    // reveals the exact numbers on a real device.
-    const diag = `cam ${vw}×${vh} · frame ${Math.round(fr.width)}×${Math.round(
-      fr.height
-    )} · out ${outW}×${outH}`;
+    const diag = `cam ${vw}×${vh} · frame ${Math.round(fr.w)}×${Math.round(
+      fr.h
+    )} · zoom ${zoom.toFixed(2)}x · out ${outW}×${outH}`;
     setFlash(true);
     window.setTimeout(() => setFlash(false), 180);
     c.toBlob(
@@ -276,7 +258,10 @@ export default function CameraOverlay({
   };
 
   const ready = !streamError && !starting;
-  const transform = `translate(${ghost.tx}px, ${ghost.ty}px) scale(${ghost.scale})`;
+  const frame =
+    historic && box.w > 0
+      ? containRect(box.w, box.h, historic.width / historic.height)
+      : null;
 
   // ---------- Review screen ----------
   if (captured) {
@@ -323,47 +308,41 @@ export default function CameraOverlay({
       <video
         ref={videoRef}
         className="cam-video"
+        style={{ transform: `scale(${zoom})` }}
         playsInline
         autoPlay
         muted
       />
 
-      {historic && (
-        <img
-          className="cam-ghost"
-          src={historic.el.src}
-          alt=""
-          style={{ opacity, transform }}
-          draggable={false}
-        />
-      )}
-
-      {/* Capture frame, shaped to the historic photo. Everything outside is
-          dimmed; the shot is cropped to exactly this rect so the new photo
-          matches the historic's proportions. */}
-      {historic && box.w > 0 && (() => {
-        const ar = historic.width / historic.height;
-        const f = containRect(box.w, box.h, ar);
-        return (
-          <div
-            ref={frameRef}
-            className="cam-frame"
-            style={{
-              left: `${f.left}px`,
-              top: `${f.top}px`,
-              width: `${f.w}px`,
-              height: `${f.h}px`,
-            }}
-            aria-hidden
+      {/* Capture frame, shaped to the historic photo, with the ghost locked
+          inside it. Everything outside is dimmed; the shot is cropped to exactly
+          this rect, so the new photo matches the historic's aspect and crop. */}
+      {frame && (
+        <div
+          ref={frameRef}
+          className="cam-frame"
+          style={{
+            left: `${frame.left}px`,
+            top: `${frame.top}px`,
+            width: `${frame.w}px`,
+            height: `${frame.h}px`,
+          }}
+        >
+          <img
+            className="cam-frame__ghost"
+            src={historic!.el.src}
+            alt=""
+            style={{ opacity }}
+            draggable={false}
           />
-        );
-      })()}
+        </div>
+      )}
 
       <div className="cam-grid" aria-hidden>
         <span /> <span /> <span /> <span />
       </div>
 
-      {/* gesture surface for positioning the ghost */}
+      {/* gesture surface for pinch-to-zoom the camera */}
       <div
         className="cam-gestures"
         onPointerDown={onPointerDown}
@@ -422,24 +401,21 @@ export default function CameraOverlay({
         </div>
       )}
 
-      {/* Thumb controls (only meaningful once a ghost is loaded). Scale on the
-          left, opacity on the right: opacity is used most and sits by the
-          shutter, and keeping the left hand away from the lens in landscape. */}
+      {/* Thumb controls (only meaningful once a ghost is loaded). Zoom on the
+          left (match the old lens), opacity on the right by the shutter. */}
       {historic && (
         <>
           <div className="cam-slider cam-slider--left">
             <input
               type="range"
-              min={0.3}
-              max={3}
+              min={MIN_ZOOM}
+              max={MAX_ZOOM}
               step={0.01}
-              value={ghost.scale}
-              aria-label="Ghost scale"
-              onChange={(e) =>
-                setGhost((g) => ({ ...g, scale: Number(e.target.value) }))
-              }
+              value={zoom}
+              aria-label="Camera zoom"
+              onChange={(e) => setZoom(clampZoom(Number(e.target.value)))}
             />
-            <span className="cam-slider__label">scale</span>
+            <span className="cam-slider__label">zoom</span>
           </div>
           <div className="cam-slider cam-slider--right">
             <input
