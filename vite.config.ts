@@ -20,11 +20,11 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["apple-touch-icon.png", "opencv.js"],
       manifest: {
-        name: "Historic Photo Aligner",
-        short_name: "Photo Aligner",
+        name: "Rephoto",
+        short_name: "Rephoto",
         description:
-          "Align a modern photograph to a historic photograph, with a live camera ghost-overlay for on-location rephotography.",
-        theme_color: "#17130f",
+          "Line up a modern photo with a historic one for before/after walking-tour sliders, with a live camera ghost overlay.",
+        theme_color: "#14161a",
         background_color: "#14161a",
         display: "standalone",
         orientation: "any",

@@ -34,7 +34,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 14px;
+  /* Keep clear of the iOS status bar / notch when installed to the home
+     screen (viewport-fit=cover + translucent status bar draw under it). */
+  padding: max(14px, calc(env(safe-area-inset-top) + 10px)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
   max-width: 1500px;
   margin: 0 auto;
 }

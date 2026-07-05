@@ -225,8 +225,8 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="brand">
-          <h1>Historic Photo Aligner</h1>
-          <p>Museum-quality before/after alignment for walking tours</p>
+          <h1>Rephoto</h1>
+          <p>Line up then &amp; now — before/after alignment for walking tours</p>
         </div>
         <div className="view-tabs">
           <button
