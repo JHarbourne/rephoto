@@ -1,9 +1,9 @@
 {
-  "name": "historic-photo-aligner",
+  "name": "photo-aligner",
   "private": true,
   "version": "0.2.0",
   "type": "module",
-  "description": "Align a modern photograph to a historic photograph for museum-quality before/after sliders.",
+  "description": "A photo aligner for museum-quality before/after sliders.",
   "scripts": {
     "postinstall": "node scripts/copy-opencv.mjs",
     "predev": "node scripts/copy-opencv.mjs",

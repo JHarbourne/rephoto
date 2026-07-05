@@ -1,14 +1,15 @@
 # Rephoto
 
-A small browser app for aligning a **modern photograph** to a **historic
-photograph** so the pair can be used in a before/after slider — the kind used
-in local-history walking tours, where fixed buildings, windows, rooflines and
-road edges must not jump when the slider moves.
+A small browser **photo aligner**: line up **two photographs of the same place**
+so the pair can be used in a before/after slider — the kind used in local-history
+walking tours (then and now), but equally for a build, a restoration, the seasons
+or the weather, where fixed edges — buildings, windows, rooflines, road edges —
+must not jump when the slider moves.
 
 Everything runs locally in the browser. Images are never uploaded to a server,
-and the modern photograph's pixels are only ever *geometrically* resampled to
-match the historic viewpoint — colours and content are never altered unless you
-explicitly choose an enhancement.
+and one photo's pixels are only ever *geometrically* resampled to match the
+other's viewpoint — colours and content are never altered unless you explicitly
+choose an enhancement.
 
 ## Two ways to use it
 

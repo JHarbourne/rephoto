@@ -60,7 +60,7 @@ export interface AlignmentResult {
 }
 
 export interface AlignmentJSON {
-  app: "historic-photo-aligner";
+  app: "photo-aligner";
   version: number;
   createdAt: string;
   historicImage: { name: string; width: number; height: number };

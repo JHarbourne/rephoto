@@ -28,7 +28,7 @@ export default defineConfig({
         name: "Rephoto",
         short_name: "Rephoto",
         description:
-          "Line up a modern photo with a historic one for before/after walking-tour sliders, with a live camera ghost overlay.",
+          "A photo aligner: line up two photos of the same place into before/after sliders, with a live camera ghost overlay.",
         theme_color: "#14161a",
         background_color: "#14161a",
         display: "standalone",

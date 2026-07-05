@@ -107,7 +107,7 @@ export function buildAlignmentJSON(
       };
 
   return {
-    app: "historic-photo-aligner",
+    app: "photo-aligner",
     version: 1,
     createdAt: now,
     historicImage: {

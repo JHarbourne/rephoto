@@ -225,7 +225,7 @@ export default function App() {
       <header className="app-header">
         <div className="brand">
           <h1>Rephoto</h1>
-          <p>Line up then and now — before/after alignment for walking tours</p>
+          <p>A photo aligner — line up then and now for before/after sliders</p>
         </div>
         <div className="view-tabs">
           <button
