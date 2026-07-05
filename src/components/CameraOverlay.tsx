@@ -52,7 +52,6 @@ export default function CameraOverlay({
   const [captured, setCaptured] = useState<{
     url: string;
     file: File;
-    diag: string;
   } | null>(null);
   const [flash, setFlash] = useState(false);
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -237,9 +236,6 @@ export default function CameraOverlay({
     c.width = outW;
     c.height = outH;
     c.getContext("2d")!.drawImage(v, sx, sy, sw, sh, 0, 0, outW, outH);
-    const diag = `cam ${vw}×${vh} · ghost ${Math.round(g.w)}×${Math.round(
-      g.h
-    )} · out ${outW}×${outH}`;
     setFlash(true);
     window.setTimeout(() => setFlash(false), 180);
     c.toBlob(
@@ -248,7 +244,7 @@ export default function CameraOverlay({
         const file = new File([blob], "rephoto-capture.jpg", {
           type: "image/jpeg",
         });
-        setCaptured({ url: URL.createObjectURL(file), file, diag });
+        setCaptured({ url: URL.createObjectURL(file), file });
       },
       "image/jpeg",
       0.95
@@ -314,7 +310,6 @@ export default function CameraOverlay({
             <img src={captured.url} alt="captured" />
           </figure>
         </div>
-        <p className="cam-review__diag">{captured.diag}</p>
         <div className="cam-review__bar">
           <button className="cam-btn ghost" onClick={retake}>
             ↺ Retake
