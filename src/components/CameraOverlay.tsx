@@ -413,8 +413,8 @@ export default function CameraOverlay({
           <div className="cam-slider cam-slider--left">
             <input
               type="range"
-              min={0.2}
-              max={5}
+              min={0.5}
+              max={2}
               step={0.01}
               value={ghost.scale}
               aria-label="Ghost size"
@@ -422,7 +422,9 @@ export default function CameraOverlay({
                 setGhost((g) => ({ ...g, scale: Number(e.target.value) }))
               }
             />
-            <span className="cam-slider__label">size</span>
+            <span className="cam-slider__label">
+              {Math.round(ghost.scale * 100)}%
+            </span>
           </div>
           <div className="cam-slider cam-slider--right">
             <input
