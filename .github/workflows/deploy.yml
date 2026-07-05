@@ -38,6 +38,10 @@ jobs:
           # Served from https://<user>.github.io/rephoto/ — set the base so
           # asset URLs and the PWA service-worker scope resolve correctly.
           VITE_BASE: /rephoto/
+          # Cloudflare Web Analytics beacon token (optional). Add a repo
+          # secret named CF_BEACON_TOKEN to switch analytics on — no code
+          # change needed; empty = analytics stays off.
+          VITE_CF_BEACON: ${{ secrets.CF_BEACON_TOKEN }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
