@@ -16,6 +16,10 @@ interface Ghost {
 
 const START: Ghost = { tx: 0, ty: 0, scale: 1 };
 
+// The size slider is logarithmic so 100% (scale 1) sits dead centre, with equal
+// travel to shrink (down to 1/FACTOR) or grow (up to FACTOR).
+const SIZE_FACTOR = 2.5;
+
 // Largest rect of a given aspect ratio that fits (centred) inside a box.
 function containRect(boxW: number, boxH: number, aspect: number) {
   const boxAspect = boxW / boxH;
@@ -413,13 +417,16 @@ export default function CameraOverlay({
           <div className="cam-slider cam-slider--left">
             <input
               type="range"
-              min={0.5}
-              max={2}
-              step={0.01}
-              value={ghost.scale}
+              min={-1}
+              max={1}
+              step={0.005}
+              value={Math.log(ghost.scale) / Math.log(SIZE_FACTOR)}
               aria-label="Ghost size"
               onChange={(e) =>
-                setGhost((g) => ({ ...g, scale: Number(e.target.value) }))
+                setGhost((g) => ({
+                  ...g,
+                  scale: Math.pow(SIZE_FACTOR, Number(e.target.value)),
+                }))
               }
             />
             <span className="cam-slider__label">
