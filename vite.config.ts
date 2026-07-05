@@ -17,7 +17,12 @@ export default defineConfig({
   base,
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
-    __CF_BEACON__: JSON.stringify(process.env.VITE_CF_BEACON || ""),
+    // Cloudflare Web Analytics beacon token for rephoto.nearmark.co.uk. Public
+    // by design (it ships in the client beacon), so it lives in the repo; the
+    // CF_BEACON_TOKEN env/secret still overrides if ever needed.
+    __CF_BEACON__: JSON.stringify(
+      process.env.VITE_CF_BEACON || "8a3ab77a18f740ad9e63aeb90d4c7b57"
+    ),
   },
   plugins: [
     react(),
