@@ -53,8 +53,18 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
     steps:
+      # GitHub's Pages publish backend intermittently returns
+      # "Deployment failed, try again later." The build is fine — only the
+      # publish flakes — so attempt it, and automatically retry once on failure
+      # instead of silently leaving the site on a stale build.
       - name: Deploy to GitHub Pages
         id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Retry deploy if the first attempt flaked
+        if: steps.deployment.outcome == 'failure'
+        id: deployment_retry
         uses: actions/deploy-pages@v4

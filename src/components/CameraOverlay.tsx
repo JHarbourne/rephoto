@@ -29,6 +29,7 @@ export default function CameraOverlay({
   onExit,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
   const [starting, setStarting] = useState(true);
   const [opacity, setOpacity] = useState(0.5);
@@ -65,6 +66,7 @@ export default function CameraOverlay({
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
+        streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
@@ -88,6 +90,16 @@ export default function CameraOverlay({
       stream?.getTracks().forEach((t) => t.stop());
     };
   }, []);
+
+  // Returning from the review screen mounts a fresh <video> element, so the
+  // live stream has to be re-attached — otherwise it stays black with only the
+  // ghost showing.
+  useEffect(() => {
+    if (!captured && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [captured]);
 
   // --- ghost positioning (drag = move, pinch = scale; no rotation) ---
   const onPointerDown = (e: React.PointerEvent) => {
@@ -145,10 +157,29 @@ export default function CameraOverlay({
       setStreamError("Camera frame not ready yet — give it a second.");
       return;
     }
+    // The viewfinder uses object-fit: cover, so it shows a centre-cropped slice
+    // of the camera frame, not the whole (wider) sensor image. Capture that same
+    // slice so the saved photo matches exactly what was lined up on screen.
+    const vw = v.videoWidth;
+    const vh = v.videoHeight;
+    const box = v.getBoundingClientRect();
+    const viewAspect = box.width / box.height;
+    const frameAspect = vw / vh;
+    let sw = vw;
+    let sh = vh;
+    if (frameAspect > viewAspect) {
+      // frame is wider than the screen — crop the sides
+      sw = Math.round(vh * viewAspect);
+    } else {
+      // frame is taller than the screen — crop top and bottom
+      sh = Math.round(vw / viewAspect);
+    }
+    const sx = Math.round((vw - sw) / 2);
+    const sy = Math.round((vh - sh) / 2);
     const c = document.createElement("canvas");
-    c.width = v.videoWidth;
-    c.height = v.videoHeight;
-    c.getContext("2d")!.drawImage(v, 0, 0, c.width, c.height);
+    c.width = sw;
+    c.height = sh;
+    c.getContext("2d")!.drawImage(v, sx, sy, sw, sh, 0, 0, sw, sh);
     setFlash(true);
     window.setTimeout(() => setFlash(false), 180);
     c.toBlob(
