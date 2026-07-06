@@ -603,7 +603,7 @@ body {
 .cam-review__grid {
   flex: 1; min-height: 0;
   display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
-  padding: calc(env(safe-area-inset-top) + 60px) 10px 6px;
+  padding: calc(env(safe-area-inset-top) + 14px) 10px 6px;
 }
 .cam-review__cell {
   position: relative; margin: 0;
@@ -629,13 +629,20 @@ body {
 }
 .cam-btn {
   flex: 1 1 auto; max-width: 240px;
+  display: inline-flex; align-items: center; justify-content: center;
+  text-align: center;
   background: var(--panel-2); color: #fff;
   border: 1px solid var(--line); border-radius: 12px;
   padding: 15px 18px; font-size: 15px; font-weight: 600; cursor: pointer;
 }
 .cam-btn.primary { background: var(--accent-2); color: #0d2a17; border-color: var(--accent-2); }
+.cam-btn.strong { background: var(--accent); color: #1a1205; border-color: var(--accent); }
 .cam-btn.ghost { background: transparent; }
 .cam-btn:active { filter: brightness(1.12); }
+
+/* Secondary row of review actions: quieter than the Save / Next loop above. */
+.cam-review__bar--sub { padding-top: 0; }
+.cam-review__bar--sub .cam-btn { padding: 12px 16px; font-size: 14px; }
 
 @media (max-width: 560px) {
   .cam-review__grid { grid-template-columns: 1fr; }

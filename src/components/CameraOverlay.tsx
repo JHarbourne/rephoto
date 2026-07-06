@@ -262,6 +262,15 @@ export default function CameraOverlay({
     setCaptured(null);
   };
 
+  // Batch flow: drop the just-taken shot, load the next old photo, and go
+  // straight back to the live camera with the new ghost — so you can rephoto a
+  // stack of old photos one after another without leaving the camera.
+  const nextPhoto = (f: File) => {
+    if (captured) URL.revokeObjectURL(captured.url);
+    setCaptured(null);
+    onFile("historic", f);
+  };
+
   const save = async () => {
     if (!captured) return;
     const nav = navigator as Navigator & {
@@ -297,11 +306,6 @@ export default function CameraOverlay({
   if (captured) {
     return (
       <div className="cam cam--review">
-        <div className="cam-review__top">
-          <button className="cam-chip cam-chip--strong" onClick={retake}>
-            ＋ Take another
-          </button>
-        </div>
         <div className="cam-review__grid">
           <figure className="cam-review__cell">
             <span className="cam-review__tag">Historic</span>
@@ -316,14 +320,31 @@ export default function CameraOverlay({
             <img src={captured.url} alt="captured" />
           </figure>
         </div>
+        {/* Primary loop: keep this shot, then move to the next old photo. */}
         <div className="cam-review__bar">
-          <button className="cam-btn ghost" onClick={retake}>
-            ↺ Retake
-          </button>
-          <button className="cam-btn" onClick={save}>
+          <button className="cam-btn primary" onClick={save}>
             ⇪ Save to Photos
           </button>
-          <button className="cam-btn primary" onClick={useInAligner}>
+          <label className="cam-btn strong">
+            ＋ Next photo
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) nextPhoto(f);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
+        </div>
+        {/* Alternatives: reshoot the same photo, or fine-tune on a big screen. */}
+        <div className="cam-review__bar cam-review__bar--sub">
+          <button className="cam-btn ghost" onClick={retake}>
+            ↺ Retake this one
+          </button>
+          <button className="cam-btn ghost" onClick={useInAligner}>
             Use in aligner →
           </button>
         </div>
