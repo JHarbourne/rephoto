@@ -17,6 +17,28 @@ const U = (r2: number): number => {
   return 0.5 * r2 * Math.log(r2);
 };
 
+/**
+ * Typical magnitude of the radial-basis kernel across these control points
+ * (mean |U(r²)| over distinct pairs). Regularisation is measured against this
+ * so a normalised "stiffness" behaves the same whether the frame is a 4000px
+ * photo or a 600px thumbnail. Returns 1 as a safe fallback.
+ */
+export function kernelScale(dst: Pt[]): number {
+  const n = dst.length;
+  if (n < 2) return 1;
+  let acc = 0;
+  let count = 0;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const dx = dst[i].x - dst[j].x;
+      const dy = dst[i].y - dst[j].y;
+      acc += Math.abs(U(dx * dx + dy * dy));
+      count++;
+    }
+  }
+  return count && acc > 0 ? acc / count : 1;
+}
+
 export interface TPSModel {
   /** Control points in destination space. */
   dst: Pt[];

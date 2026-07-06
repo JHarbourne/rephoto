@@ -54,6 +54,9 @@ export default function App() {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [addMode, setAddMode] = useState(true);
   const [warpType, setWarpType] = useState<WarpType>("homography");
+  // TPS stiffness, 0 = exact (can ripple) … 1 = stiff/straight. A little
+  // stiffness by default keeps flat walls flat while still tracking points.
+  const [smoothing, setSmoothing] = useState(0.25);
   const [result, setResult] = useState<AlignmentResult | null>(null);
   const [crop, setCrop] = useState<CropRect | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -80,14 +83,18 @@ export default function App() {
   const doAlign = useCallback(() => {
     if (!historic || !modern) return;
     try {
-      const r = align(historic, modern, pairs, { warpType, cubic: true });
+      const r = align(historic, modern, pairs, {
+        warpType,
+        cubic: true,
+        smoothing,
+      });
       setResult(r);
       setError(null);
     } catch (e) {
       setResult(null);
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [historic, modern, pairs, warpType]);
+  }, [historic, modern, pairs, warpType, smoothing]);
 
   // Live preview: recompute automatically (debounced) as points change.
   useEffect(() => {
@@ -98,7 +105,7 @@ export default function App() {
     const id = window.setTimeout(doAlign, 180);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canAlign, pairs, warpType, historic, modern]);
+  }, [canAlign, pairs, warpType, historic, modern, smoothing]);
 
   const handleFile = async (side: Side, file: File) => {
     try {
@@ -304,6 +311,22 @@ export default function App() {
             <option value="tps">Thin plate spline (3+ pts)</option>
           </select>
         </label>
+        {warpType === "tps" && (
+          <label
+            className="stiffness"
+            title="Low = hit every point exactly (can bow flat walls). High = stiffer, straighter warp."
+          >
+            Stiffness
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={smoothing}
+              onChange={(e) => setSmoothing(Number(e.target.value))}
+            />
+          </label>
+        )}
         <button className="btn primary" onClick={doAlign} disabled={!canAlign}>
           Align
         </button>

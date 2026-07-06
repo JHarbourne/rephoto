@@ -137,6 +137,15 @@ body {
   padding: 7px 8px;
 }
 
+.stiffness {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+.stiffness input[type="range"] { width: 110px; }
+
 /* Status bar */
 .status-bar {
   display: flex;

@@ -1,11 +1,17 @@
 import { getCV } from "../opencv/loadOpenCV";
 import type { AlignmentResult, LoadedImage, Pair, WarpType } from "../types";
-import { evalTPS, fitTPS } from "./tps";
+import { evalTPS, fitTPS, kernelScale } from "./tps";
 
 export interface AlignOptions {
   warpType: WarpType;
   /** Interpolation used for the final warp. Cubic preserves detail best. */
   cubic?: boolean;
+  /**
+   * TPS stiffness, normalised 0–1. 0 = exact interpolation (hits every point
+   * but can ripple flat surfaces); higher relaxes the fit for a smoother,
+   * straighter warp, approaching a global affine at the top of the range.
+   */
+  smoothing?: number;
 }
 
 interface ReadyPair {
@@ -128,9 +134,19 @@ export function align(
       H.delete();
     } else {
       // Thin plate spline: build dense sampling maps over the historic frame.
+      // Map the normalised stiffness (0–1) to an absolute regularisation
+      // scaled to the kernel magnitude, on an exponential curve so the slider
+      // has useful travel (the effect of regularisation is roughly log-scaled).
+      const dstPts = ready.map((p) => p.historic);
+      const stiffness = Math.max(0, Math.min(1, opts.smoothing ?? 0));
+      const reg =
+        stiffness > 0
+          ? kernelScale(dstPts) * (Math.exp(5 * stiffness) - 1) * 0.05
+          : 0;
       const model = fitTPS(
-        ready.map((p) => p.historic),
-        ready.map((p) => p.modern)
+        dstPts,
+        ready.map((p) => p.modern),
+        reg
       );
       rmsError = tpsRms(model, ready);
 
