@@ -2,6 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Secure-context APIs (the camera via getUserMedia) don't exist on http.
+      // Bounce any insecure load up to https before anything else runs — covers
+      // an installed PWA whose start URL was captured over http.
+      (function () {
+        var h = location.hostname;
+        if (
+          location.protocol === "http:" &&
+          h !== "localhost" &&
+          h !== "127.0.0.1"
+        ) {
+          location.replace(
+            "https://" +
+              location.host +
+              location.pathname +
+              location.search +
+              location.hash
+          );
+        }
+      })();
+    </script>
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
