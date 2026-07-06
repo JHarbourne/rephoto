@@ -261,12 +261,24 @@ export default function CameraOverlay({
     const sy = vh / 2 + (g.top - bh / 2) / coverScale;
     const sw = g.w / coverScale;
     const sh = g.h / coverScale;
-    const outW = Math.max(1, Math.round(sw));
-    const outH = Math.max(1, Math.round(sh));
+    // Keep the crop inside the camera frame. If the ghost was dragged or zoomed
+    // past an edge, the source rect would spill outside the video and those
+    // pixels sample as black — a black band baked into the saved photo. Preserve
+    // the historic aspect (shrink uniformly only if the rect is larger than the
+    // frame), then shift inward so the whole rect sits on real pixels.
+    const cx = sx + sw / 2;
+    const cy = sy + sh / 2;
+    const fit = Math.min(1, vw / sw, vh / sh);
+    const rw = sw * fit;
+    const rh = sh * fit;
+    const rx = Math.min(Math.max(cx - rw / 2, 0), vw - rw);
+    const ry = Math.min(Math.max(cy - rh / 2, 0), vh - rh);
+    const outW = Math.max(1, Math.round(rw));
+    const outH = Math.max(1, Math.round(rh));
     const c = document.createElement("canvas");
     c.width = outW;
     c.height = outH;
-    c.getContext("2d")!.drawImage(v, sx, sy, sw, sh, 0, 0, outW, outH);
+    c.getContext("2d")!.drawImage(v, rx, ry, rw, rh, 0, 0, outW, outH);
     setFlash(true);
     window.setTimeout(() => setFlash(false), 180);
     c.toBlob(
