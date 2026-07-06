@@ -1,0 +1,17 @@
+name: Accessibility scan
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 6 * * 1'
+jobs:
+  a11y:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: github/accessibility-scanner@v3
+        with:
+          urls: |
+            https://rephoto.nearmark.co.uk
+          repository: JHarbourne/rephoto
+          token: ${{ secrets.A11Y_SCAN_TOKEN }}
+          cache_key: a11y-rephoto-main.json
+          # dry_run: true
