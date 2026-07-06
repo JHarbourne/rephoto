@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { LoadedImage, Side } from "../types";
+import LineUpCheck from "./LineUpCheck";
 
 interface Props {
   historic: LoadedImage | null;
@@ -55,6 +56,7 @@ export default function CameraOverlay({
   } | null>(null);
   const [flash, setFlash] = useState(false);
   const [box, setBox] = useState({ w: 0, h: 0 });
+  const [checkOpen, setCheckOpen] = useState(false);
 
   // Track the on-screen size so the capture can map the ghost's position back to
   // camera pixels (recomputed on rotate/resize).
@@ -257,6 +259,18 @@ export default function CameraOverlay({
     );
   };
 
+  // Freeze the current camera frame for the line-up check (so pins can be
+  // placed on a still image rather than a moving one).
+  const grabFrame = (): { url: string } | null => {
+    const v = videoRef.current;
+    if (!v || !v.videoWidth) return null;
+    const c = document.createElement("canvas");
+    c.width = v.videoWidth;
+    c.height = v.videoHeight;
+    c.getContext("2d")!.drawImage(v, 0, 0);
+    return { url: c.toDataURL("image/jpeg", 0.85) };
+  };
+
   const retake = () => {
     if (captured) URL.revokeObjectURL(captured.url);
     setCaptured(null);
@@ -390,21 +404,38 @@ export default function CameraOverlay({
           ⇄ Align photos
         </button>
         {historic && (
-          <label className="cam-chip">
-            Change historic photo
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) onFile("historic", f);
-                e.currentTarget.value = "";
-              }}
-            />
-          </label>
+          <>
+            <button
+              className="cam-chip"
+              onClick={() => setCheckOpen(true)}
+              title="Check whether you're standing in the right place (left/right)"
+            >
+              ⟂ Line-up check
+            </button>
+            <label className="cam-chip">
+              Change historic photo
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) onFile("historic", f);
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+          </>
         )}
       </div>
+
+      {checkOpen && historic && (
+        <LineUpCheck
+          historic={historic}
+          grabFrame={grabFrame}
+          onClose={() => setCheckOpen(false)}
+        />
+      )}
 
       {/* clear call to action when nothing is loaded yet */}
       {!historic && ready && (
