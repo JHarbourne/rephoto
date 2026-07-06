@@ -21,6 +21,10 @@
     />
     <meta name="apple-mobile-web-app-title" content="Rephoto" />
     <style>
+      /* Base background matches the splash so no white shows through at the
+         safe-area / home-indicator edges before the app stylesheet loads
+         (fixes a white bar along the bottom on iOS). */
+      html, body { margin: 0; background: #14161a; }
       /* Branded loading splash — shown from first paint until the app mounts
          (React replaces #root's contents on render). Styled inline because the
          app's stylesheet hasn't loaded yet at this point. */

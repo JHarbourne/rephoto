@@ -57,6 +57,7 @@ export default function CameraOverlay({
   const [flash, setFlash] = useState(false);
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [checkOpen, setCheckOpen] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   // Track the on-screen size so the capture can map the ghost's position back to
   // camera pixels (recomputed on rotate/resize).
@@ -90,8 +91,29 @@ export default function CameraOverlay({
     let cancelled = false;
 
     const start = async () => {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        setStreamError("This browser doesn't provide camera access.");
+      setStarting(true);
+      setStreamError(null);
+      const md = navigator.mediaDevices;
+      const standalone =
+        window.matchMedia?.("(display-mode: standalone)").matches === true ||
+        (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+      if (typeof window !== "undefined" && window.isSecureContext === false) {
+        setStreamError(
+          "The camera needs a secure (https) page. Open https://rephoto.nearmark.co.uk directly."
+        );
+        setStarting(false);
+        return;
+      }
+      if (!md || !md.getUserMedia) {
+        // On iOS/iPadOS the camera is often unreachable from a Home-Screen
+        // (standalone) PWA even though it works in Safari; and Screen Time or
+        // Lockdown Mode can remove it entirely.
+        setStreamError(
+          standalone
+            ? "This installed app can't reach the camera on iPad. Open rephoto.nearmark.co.uk in Safari instead, then check Settings › Screen Time › Content & Privacy Restrictions › Camera is allowed."
+            : "Safari isn't offering the camera here. Check Settings › Screen Time › Content & Privacy Restrictions › Camera is on (and Lockdown Mode is off), then tap Try again."
+        );
         setStarting(false);
         return;
       }
@@ -133,7 +155,8 @@ export default function CameraOverlay({
       cancelled = true;
       stream?.getTracks().forEach((t) => t.stop());
     };
-  }, []);
+    // Re-run when the user taps "Try again" (e.g. after granting permission).
+  }, [retryKey]);
 
   // Returning from the review screen mounts a fresh <video>, so re-attach the
   // live stream — otherwise it stays black.
@@ -516,9 +539,17 @@ export default function CameraOverlay({
           {streamError ? (
             <>
               <p>{streamError}</p>
-              <button className="cam-chip" onClick={onExit}>
-                ← Back
-              </button>
+              <div className="cam-status__actions">
+                <button
+                  className="cam-chip cam-chip--strong"
+                  onClick={() => setRetryKey((k) => k + 1)}
+                >
+                  ↻ Try again
+                </button>
+                <button className="cam-chip" onClick={onExit}>
+                  ← Back
+                </button>
+              </div>
             </>
           ) : (
             <p>Starting camera…</p>
