@@ -53,11 +53,13 @@
       }
       #splash .sub {
         font-size: 14px;
-        color: #98a0b3;
+        /* Colour + pulse floor chosen so the dimmest frame still clears WCAG AA
+           (4.5:1) against the #14161a background — 6.18:1 at 0.7 opacity. */
+        color: #c7cede;
         animation: splashPulse 1.4s ease-in-out infinite;
       }
       @keyframes splashPulse {
-        0%, 100% { opacity: 0.45; }
+        0%, 100% { opacity: 0.7; }
         50% { opacity: 1; }
       }
       @media (prefers-reduced-motion: reduce) {
@@ -67,7 +69,7 @@
   </head>
   <body>
     <div id="root">
-      <div id="splash">
+      <main id="splash" aria-label="Loading Rephoto">
         <svg class="mark" viewBox="0 0 96 96" aria-hidden="true">
           <rect x="0" y="0" width="48" height="96" fill="#8c95a1" />
           <rect x="48" y="0" width="48" height="96" fill="#f5a11e" />
@@ -79,8 +81,8 @@
           </g>
         </svg>
         <div class="word">Rephoto</div>
-        <div class="sub">Lining things up…</div>
-      </div>
+        <div class="sub" role="status">Lining things up…</div>
+      </main>
     </div>
 
     <!--
