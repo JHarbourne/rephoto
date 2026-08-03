@@ -1,0 +1,19 @@
+# Dependabot keeps dependencies patched by watching them against GitHub's
+# advisory database and opening PRs with the fix — the native, first-party way
+# to catch things like outdated build tooling. No third-party access required.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      # Bundle routine version bumps into one PR to cut noise; security fixes
+      # still come through promptly.
+      dev-dependencies:
+        dependency-type: "development"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
